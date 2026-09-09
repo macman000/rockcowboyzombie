@@ -70,10 +70,9 @@ const G=[
 ["Nuke",9999,1200,1,0,"nuke"]
 ];
 const MINIGUN_INDEX=13,NUKE_INDEX=14,NUKE_KILLS_AFTER_MINIGUN=500,NUKE_REQUIREMENT=MINIGUN_INDEX*20+NUKE_KILLS_AFTER_MINIGUN;
-const FREE_UNLOCK_KEY="rockCowboyV7FreeUnlocked";
-let p,zs,bs,bursts,k,unlocked,w,hp,last,spawn,dead,paused=false,hordeTimer=200,nukeUnlocked=false,allUnlocked=localStorage.getItem(FREE_UNLOCK_KEY)==="1";
+let p,zs,bs,bursts,k,unlocked,w,hp,last,spawn,dead,paused=false,hordeTimer=200,nukeUnlocked=false,allUnlocked=false;
 function size(){c.width=innerWidth;c.height=innerHeight;w=c.width;h=c.height}addEventListener("resize",size);size();
-function start(){p={x:0,y:0};zs=[];bs=[];bursts=[];k=0;unlocked=allUnlocked?G.length:1;nukeUnlocked=allUnlocked;weapon=0;hp=10;last=0;spawn=0;dead=false;paused=false;hordeTimer=200;nukeActive=false;document.getElementById("over").style.display="none";document.getElementById("pauseMenu").style.display="none";update();menu()}
+function start(){p={x:0,y:0};zs=[];bs=[];bursts=[];k=0;unlocked=1;nukeUnlocked=false;allUnlocked=false;weapon=0;hp=10;last=0;spawn=0;dead=false;paused=false;hordeTimer=200;nukeActive=false;document.getElementById("over").style.display="none";document.getElementById("pauseMenu").style.display="none";update();menu()}
 let weapon=0,nukeActive=false;start();
 function nukeReady(){return allUnlocked||nukeUnlocked||(unlocked>=NUKE_INDEX&&k>=NUKE_REQUIREMENT)}
 function refreshUnlocks(){unlocked=allUnlocked?G.length:Math.min(NUKE_INDEX,1+Math.floor(k/20))}
@@ -92,7 +91,7 @@ document.getElementById("closeCode").onclick=()=>{document.getElementById("codeM
 document.getElementById("submitCode").onclick=()=>{
  let code=document.getElementById("codeInput").value.trim().toUpperCase();
  if(code==="FREE"){
-  allUnlocked=true; localStorage.setItem(FREE_UNLOCK_KEY,"1"); refreshUnlocks(); nukeUnlocked=true; menu(); update();
+  allUnlocked=true; refreshUnlocks(); nukeUnlocked=true; menu(); update();
   document.getElementById("codeResult").textContent="✓ FREE accepted! All guns unlocked!";
  }else{document.getElementById("codeResult").textContent="✗ Invalid code";}
 };
