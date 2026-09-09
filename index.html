@@ -57,6 +57,7 @@ const G=[
 ["Revolver",48,420,1,.015,"normal"],
 ["SMG",20,100,1,.08,"normal"],
 ["Shotgun",9999,600,7,.35,"normal"],
+["SMShotgun",20,140,1,.08,"smshotgun"],
 ["Assault Rifle",34,150,1,.045,"normal"],
 ["LMG",9999,115,1,.075,"normal"],
 ["Sniper",9999,850,1,.006,"normal"],
@@ -68,11 +69,11 @@ const G=[
 ["Laser Minigun",9999,35,1,.012,"laserMini"],
 ["Nuke",9999,1200,1,0,"nuke"]
 ];
-const MINIGUN_INDEX=12,NUKE_INDEX=13,NUKE_KILLS_AFTER_MINIGUN=500,NUKE_REQUIREMENT=MINIGUN_INDEX*20+NUKE_KILLS_AFTER_MINIGUN;
+const MINIGUN_INDEX=13,NUKE_INDEX=14,NUKE_KILLS_AFTER_MINIGUN=500,NUKE_REQUIREMENT=MINIGUN_INDEX*20+NUKE_KILLS_AFTER_MINIGUN;
 const FREE_UNLOCK_KEY="rockCowboyV7FreeUnlocked";
-let p,zs,bs,k,unlocked,w,hp,last,spawn,dead,paused=false,hordeTimer=200,nukeUnlocked=false,allUnlocked=localStorage.getItem(FREE_UNLOCK_KEY)==="1";
+let p,zs,bs,bursts,k,unlocked,w,hp,last,spawn,dead,paused=false,hordeTimer=200,nukeUnlocked=false,allUnlocked=localStorage.getItem(FREE_UNLOCK_KEY)==="1";
 function size(){c.width=innerWidth;c.height=innerHeight;w=c.width;h=c.height}addEventListener("resize",size);size();
-function start(){p={x:0,y:0};zs=[];bs=[];k=0;unlocked=allUnlocked?G.length:1;nukeUnlocked=allUnlocked;weapon=0;hp=10;last=0;spawn=0;dead=false;paused=false;hordeTimer=200;nukeActive=false;document.getElementById("over").style.display="none";document.getElementById("pauseMenu").style.display="none";update();menu()}
+function start(){p={x:0,y:0};zs=[];bs=[];bursts=[];k=0;unlocked=allUnlocked?G.length:1;nukeUnlocked=allUnlocked;weapon=0;hp=10;last=0;spawn=0;dead=false;paused=false;hordeTimer=200;nukeActive=false;document.getElementById("over").style.display="none";document.getElementById("pauseMenu").style.display="none";update();menu()}
 let weapon=0,nukeActive=false;start();
 function nukeReady(){return allUnlocked||nukeUnlocked||(unlocked>=NUKE_INDEX&&k>=NUKE_REQUIREMENT)}
 function refreshUnlocks(){unlocked=allUnlocked?G.length:Math.min(NUKE_INDEX,1+Math.floor(k/20))}
@@ -108,7 +109,16 @@ function shootGun(t){
  if(("ontouchstart"in window)&&zs.length){let b=zs[0],bd=1e99;for(let z of zs){let d=(z.x-p.x)**2+(z.y-p.y)**2;if(d<bd){bd=d;b=z}}tx=b.x;ty=b.y}
  let a=Math.atan2(ty-p.y,tx-p.x);
  for(let i=0;i<g[3];i++){
-  let aa=a+(Math.random()-.5)*g[4];
+ let aa=a+(Math.random()-.5)*g[4];
+  if(g[5]==="smshotgun"){
+   // One accurate SMG shot and a shotgun spread are fired together.
+   bs.push({x:p.x,y:p.y,vx:Math.cos(a)*850,vy:Math.sin(a)*850,life:1,d:20,type:"normal",r:4});
+   for(let pellet=0;pellet<7;pellet++){
+    let spread=a+(Math.random()-.5)*.35;
+    bs.push({x:p.x,y:p.y,vx:Math.cos(spread)*850,vy:Math.sin(spread)*850,life:1,d:12,type:"normal",r:4});
+   }
+   continue;
+  }
   let speed=g[5]==="flame"?700:850;
   let life=g[5]==="flame"?.48:1;
   let radius=g[5]==="nuke"?18:(g[5]==="plutonium"?9:(g[5]==="flame"?8:(g[5]==="laserMini"?5:4)));
@@ -135,7 +145,7 @@ function zombieHit(b,z){
 }
 function damagePlayer(amount){hp=Math.max(0,hp-amount);update();if(hp<=0){dead=true;final.textContent=k;over.style.display="flex"}}
 function killZombieAt(i){let z=zs[i];if(!z)return;zs.splice(i,1);k++;refreshUnlocks();if(z.kind==="bomb")zombieExplosion(z)}
-function zombieExplosion(origin){let radius=120;for(let i=zs.length-1;i>=0;i--)if(Math.hypot(zs[i].x-origin.x,zs[i].y-origin.y)<=radius)killZombieAt(i);if(Math.hypot(p.x-origin.x,p.y-origin.y)<=radius)damagePlayer(3)}
+function zombieExplosion(origin){let radius=120;bursts.push({x:origin.x,y:origin.y,life:.45});for(let i=zs.length-1;i>=0;i--)if(Math.hypot(zs[i].x-origin.x,zs[i].y-origin.y)<=radius)killZombieAt(i);if(Math.hypot(p.x-origin.x,p.y-origin.y)<=radius)damagePlayer(3)}
 function explode(b){
  let radius=115;
  for(let i=zs.length-1;i>=0;i--){
@@ -146,6 +156,7 @@ function explode(b){
 }
 function updateGame(t,dt){
  if(dead||paused)return;
+ for(let i=bursts.length-1;i>=0;i--){bursts[i].life-=dt;if(bursts[i].life<=0)bursts.splice(i,1)}
  hordeTimer-=dt;
  if(hordeTimer<=0){
   for(let horde=0;horde<300;horde++) spawnZ();if(nukeActive){k+=zs.length;zs.length=0;refreshUnlocks();menu();update()}
@@ -204,6 +215,7 @@ for(let b of bs){
  x.beginPath();x.arc(sx,sy,b.r,0,7);x.fill();
  if(b.type==="laser"){x.globalAlpha=.35;x.beginPath();x.arc(sx,sy,10,0,7);x.fill();x.globalAlpha=1}
 }
+for(let burst of bursts){let progress=1-burst.life/.45,sx=burst.x-cx+w/2,sy=burst.y-cy+h/2,r=18+progress*102;x.save();x.globalAlpha=(1-progress)*.8;x.fillStyle="#ff9f18";x.beginPath();x.arc(sx,sy,r,0,7);x.fill();x.globalAlpha=(1-progress);x.strokeStyle="#fff2a6";x.lineWidth=7;x.beginPath();x.arc(sx,sy,r,0,7);x.stroke();x.restore()}
 for(let z of zs){let sx=z.x-cx+w/2,sy=z.y-cy+h/2;x.save();x.translate(sx,sy);x.scale(z.scale||1,z.scale||1); // stylized zombie body
 x.fillStyle=z.kind==="bomb"?"#bd3030":"#4e8e55";x.fillRect(-17,-5,34,30);x.beginPath();x.arc(0,-13,18,0,7);x.fill();x.fillStyle=z.kind==="bomb"?"#651c1c":"#29352b";x.fillRect(-13,20,9,18);x.fillRect(4,20,9,18);x.fillStyle="#e8e8b0";x.fillRect(-11,-17,6,5);x.fillRect(5,-17,6,5);x.fillStyle="#222";x.fillRect(-4,-6,8,3);x.strokeStyle=z.kind==="bomb"?"#651c1c":"#29352b";x.lineWidth=7;x.beginPath();x.moveTo(-17,2);x.lineTo(-29,15);x.moveTo(17,2);x.lineTo(29,15);x.stroke();if(z.kind==="bomb"){x.fillStyle="#ffcc33";x.beginPath();x.arc(0,-30,5,0,7);x.fill()}x.restore()}
 let px=w/2,py=h/2;x.save();x.translate(px,py); // rock cowboy
