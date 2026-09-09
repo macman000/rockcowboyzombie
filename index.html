@@ -69,14 +69,14 @@ const G=[
 ["Nuke",9999,1200,1,0,"nuke"]
 ];
 const MINIGUN_INDEX=12,NUKE_INDEX=13,NUKE_KILLS_AFTER_MINIGUN=500,NUKE_REQUIREMENT=MINIGUN_INDEX*20+NUKE_KILLS_AFTER_MINIGUN;
-let p,zs,bs,k,unlocked,w,hp,last,spawn,dead,paused=false,hordeTimer=200,nukeUnlocked=false;
+let p,zs,bs,k,unlocked,w,hp,last,spawn,dead,paused=false,hordeTimer=200,nukeUnlocked=false,allUnlocked=false;
 function size(){c.width=innerWidth;c.height=innerHeight;w=c.width;h=c.height}addEventListener("resize",size);size();
-function start(){p={x:0,y:0};zs=[];bs=[];k=0;unlocked=1;nukeUnlocked=false;weapon=0;hp=10;last=0;spawn=0;dead=false;paused=false;hordeTimer=200;nukeActive=false;document.getElementById("over").style.display="none";document.getElementById("pauseMenu").style.display="none";update();menu()}
+function start(){p={x:0,y:0};zs=[];bs=[];k=0;unlocked=allUnlocked?G.length:1;nukeUnlocked=allUnlocked;weapon=0;hp=10;last=0;spawn=0;dead=false;paused=false;hordeTimer=200;nukeActive=false;document.getElementById("over").style.display="none";document.getElementById("pauseMenu").style.display="none";update();menu()}
 let weapon=0,nukeActive=false;start();
-function nukeReady(){return nukeUnlocked||(unlocked>=NUKE_INDEX&&k>=NUKE_REQUIREMENT)}
+function nukeReady(){return allUnlocked||nukeUnlocked||(unlocked>=NUKE_INDEX&&k>=NUKE_REQUIREMENT)}
 function refreshUnlocks(){unlocked=Math.min(NUKE_INDEX,1+Math.floor(k/20))}
-function update(){document.getElementById("kills").textContent=k;document.getElementById("gun").textContent=G[weapon][0];let n=k%20,afterMinigun=Math.max(0,k-MINIGUN_INDEX*20);document.getElementById("fill").style.width=(unlocked<NUKE_INDEX?n*5:Math.min(100,afterMinigun/NUKE_KILLS_AFTER_MINIGUN*100))+"%";document.getElementById("barText").textContent=nukeReady()?"ALL GUNS UNLOCKED":unlocked>=NUKE_INDEX?afterMinigun+" / 500 to unlock Nuke":n+" / 20 to next gun";document.getElementById("healthFill").style.width=hp*10+"%";document.getElementById("healthText").textContent=hp+" / 10 HITS";document.getElementById("countdown").textContent="HORDE: "+Math.max(0,Math.ceil(hordeTimer))+"s"}
-function menu(){let q=document.getElementById("guns");q.innerHTML="";for(let i=0;i<G.length;i++){let available=i===NUKE_INDEX?nukeReady():i<unlocked;let b=document.createElement("button");b.className="gun"+(i==weapon?" selected":"");b.textContent=(available?"✓ ":"🔒 ")+G[i][0]+(i===NUKE_INDEX&&!available?" (500 kills after Minigun)":"");b.disabled=!available;b.onclick=()=>{weapon=i;update();menu()};q.appendChild(b)}}
+function update(){document.getElementById("kills").textContent=k;document.getElementById("gun").textContent=G[weapon][0];let n=k%20,afterMinigun=Math.max(0,k-MINIGUN_INDEX*20);document.getElementById("fill").style.width=allUnlocked?"100%":(unlocked<NUKE_INDEX?n*5:Math.min(100,afterMinigun/NUKE_KILLS_AFTER_MINIGUN*100))+"%";document.getElementById("barText").textContent=allUnlocked||nukeReady()?"ALL GUNS UNLOCKED":unlocked>=NUKE_INDEX?afterMinigun+" / 500 to unlock Nuke":n+" / 20 to next gun";document.getElementById("healthFill").style.width=hp*10+"%";document.getElementById("healthText").textContent=hp+" / 10 HITS";document.getElementById("countdown").textContent="HORDE: "+Math.max(0,Math.ceil(hordeTimer))+"s"}
+function menu(){let q=document.getElementById("guns");q.innerHTML="";for(let i=0;i<G.length;i++){let available=allUnlocked?(true):(i===NUKE_INDEX?nukeReady():i<unlocked);let b=document.createElement("button");b.className="gun"+(i==weapon?" selected":"");b.textContent=(available?"✓ ":"🔒 ")+G[i][0]+(i===NUKE_INDEX&&!available?" (500 kills after Minigun)":"");b.disabled=!available;b.onclick=()=>{weapon=i;update();menu()};q.appendChild(b)}}
 document.getElementById("backpack").onclick=()=>{let e=document.getElementById("menu");e.style.display=e.style.display=="block"?"none":"block"};
 document.getElementById("pause").onclick=()=>{if(dead)return;paused=!paused;document.getElementById("pauseMenu").style.display=paused?"flex":"none"};
 document.getElementById("resume").onclick=()=>{paused=false;document.getElementById("pauseMenu").style.display="none"};
@@ -90,7 +90,7 @@ document.getElementById("closeCode").onclick=()=>{document.getElementById("codeM
 document.getElementById("submitCode").onclick=()=>{
  let code=document.getElementById("codeInput").value.trim().toUpperCase();
  if(code==="FREE"){
-  unlocked=NUKE_INDEX; nukeUnlocked=true; menu(); update();
+  unlocked=G.length; nukeUnlocked=true; allUnlocked=true; menu(); update();
   document.getElementById("codeResult").textContent="✓ FREE accepted! All guns unlocked!";
  }else{document.getElementById("codeResult").textContent="✗ Invalid code";}
 };
