@@ -1,0 +1,1 @@
+Github pages link: macman000.github.io/rockcowboyzombie. if you want to download it for offline use, >>> created by August, i did nothing. code free, you can download it, just download index.html. its one simple html file. Current version v7. If that number changes (check it every once in a while), delete the old one and download the new one.
