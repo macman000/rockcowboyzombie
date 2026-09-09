@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Rock Cowboy Zombie Survival V7</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#20252a;font-family:Arial,sans-serif}
+canvas{display:block;width:100%;height:100%;touch-action:none}
+#hud{position:fixed;inset:0;color:white;pointer-events:none}
+button{font-family:Arial,sans-serif}
+#pause{position:absolute;right:10px;top:10px;width:52px;height:52px;border:0;border-radius:12px;background:#111d;color:white;font-size:22px;pointer-events:auto}
+#backpack{position:absolute;left:10px;top:10px;width:52px;height:52px;border:0;border-radius:12px;background:#111d;color:white;font-size:25px;pointer-events:auto}
+#bar{position:absolute;left:72px;right:72px;top:15px;height:42px;background:#111c;border-radius:12px;padding:5px}
+#fill{height:100%;width:0;background:#ffad22;border-radius:8px}
+#barText{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:bold}
+#healthWrap{position:absolute;top:112px;left:10px;width:230px;height:22px;background:#111d;border:2px solid #fff8;border-radius:8px;overflow:hidden}
+#healthFill{height:100%;width:100%;background:#31c45a}
+#healthText{position:absolute;inset:0;text-align:center;line-height:22px;font-weight:bold;font-size:13px;text-shadow:0 1px 2px #000}
+#stats{position:absolute;top:142px;left:10px;background:#111b;padding:7px 11px;border-radius:9px;font-weight:bold;line-height:1.45}
+#menu,#pauseMenu,#over{display:none;position:absolute;pointer-events:auto}
+#menu{top:142px;left:10px;width:280px;max-width:85vw;background:#151515f2;padding:14px;border-radius:14px}
+#menu{max-height:calc(100vh - 170px);overflow:hidden}
+#guns{max-height:calc(100vh - 245px);overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;touch-action:pan-y;padding-right:6px}
+#guns::-webkit-scrollbar{width:8px}
+#guns::-webkit-scrollbar-thumb{background:#777;border-radius:8px}
+
+#menu h2{margin:0 0 8px}.gun{display:block;width:100%;margin:6px 0;padding:12px;border:0;border-radius:9px;background:#333;color:#fff;text-align:left;font-weight:bold}.gun.selected{background:#9b6800}.gun:disabled{opacity:.45}
+#pauseMenu{inset:0;background:#0009;align-items:center;justify-content:center}
+#countdown{position:absolute;top:68px;right:10px;background:#111d;border:2px solid #fff6;border-radius:12px;padding:8px 16px;font-size:20px;font-weight:900;min-width:150px;text-align:center}
+#pauseButtons{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+#codeMsg{min-height:20px;font-weight:bold;color:#ffd34d}
+.panel{background:#202020;color:white;padding:28px;border-radius:18px;text-align:center;min-width:240px}
+.panel button{padding:12px 24px;border:0;border-radius:10px;font-size:17px;font-weight:bold}
+#mobile{display:none;position:fixed;bottom:15px;left:15px;width:170px;height:170px;pointer-events:none}
+.arrow{position:absolute;width:55px;height:55px;border:0;border-radius:14px;background:#111c;color:white;font-size:25px;pointer-events:auto;touch-action:none}
+#u{left:57px;top:0}#d{left:57px;bottom:0}#l{left:0;top:57px}#r{right:0;top:57px}
+#shoot{display:none;position:fixed;right:22px;bottom:45px;width:90px;height:90px;border:0;border-radius:50%;background:#b52b2ddd;color:white;font-weight:bold;font-size:17px;pointer-events:auto;touch-action:none}
+#over{inset:0;background:#000b;align-items:center;justify-content:center}
+@media(max-width:800px),(pointer:coarse){#mobile{display:block}#shoot{display:block}}
+</style></head><body>
+<canvas id="c"></canvas>
+<div id="hud">
+<button id="backpack">🎒</button><button id="pause">Ⅱ</button><div id="countdown">HORDE: 200</div>
+<div id="bar"><div id="fill"></div><div id="barText">0 / 20 to next gun</div></div>
+<div id="healthWrap"><div id="healthFill"></div><div id="healthText">10 / 10 HITS</div></div>
+<div id="stats">Kills: <span id="kills">0</span><br>Gun: <span id="gun">Pistol</span></div>
+<div id="menu"><h2>🎒 Backpack</h2><div id="guns"></div></div>
+<div id="pauseMenu"><div class="panel"><h1>Paused</h1><p>The zombies are frozen!</p><div id="pauseButtons"><button id="resume">Resume</button><button id="codes">Codes</button></div><p id="codeMsg"></p></div></div>
+<div id="over"><div class="panel"><h1>Game Over</h1><p>Zombie kills: <b id="final">0</b></p><button id="again">Play Again</button></div></div>
+</div>
+<div id="codeModal" style="display:none;position:fixed;inset:0;background:#000b;align-items:center;justify-content:center;z-index:20;pointer-events:auto"><div class="panel"><h2>🔑 Enter Code</h2><input id="codeInput" type="text" autocomplete="off" autocapitalize="characters" placeholder="Enter code" style="width:220px;padding:12px;border-radius:9px;border:0;font-size:18px;text-align:center"><p id="codeResult" style="min-height:22px;color:#ffd34d;font-weight:bold"></p><div style="display:flex;gap:10px;justify-content:center"><button id="submitCode">Enter</button><button id="closeCode">Cancel</button></div></div></div>
+<div id="mobile"><button class="arrow" id="u">▲</button><button class="arrow" id="l">◀</button><button class="arrow" id="r">▶</button><button class="arrow" id="d">▼</button></div>
+<button id="shoot">SHOOT</button>
+<script>
+(function(){
+const c=document.getElementById("c"),x=c.getContext("2d"); let keys={},touch={u:0,d:0,l:0,r:0},mouse={x:0,y:0,down:false};
+const G=[
+["Pistol",35,300,1,.02,"normal"],
+["Revolver",48,420,1,.015,"normal"],
+["SMG",20,100,1,.08,"normal"],
+["Shotgun",9999,600,7,.35,"normal"],
+["Assault Rifle",34,150,1,.045,"normal"],
+["LMG",9999,115,1,.075,"normal"],
+["Sniper",9999,850,1,.006,"normal"],
+["Laser SMG",9999,75,1,.02,"laser"],
+["Laser Shotgun",9999,500,9,.20,"laser"],
+["Laser Sniper",9999,1000,1,.003,"laser"],
+["Plutonium Cannon",9999,900,1,.01,"plutonium"],
+["Flamethrower",9999,45,7,.42,"flame"],
+["Laser Minigun",9999,35,1,.012,"laserMini"],
+["Nuke",9999,1200,1,0,"nuke"]
+];
+const MINIGUN_INDEX=12,NUKE_INDEX=13,NUKE_KILLS_AFTER_MINIGUN=500,NUKE_REQUIREMENT=MINIGUN_INDEX*20+NUKE_KILLS_AFTER_MINIGUN;
+let p,zs,bs,k,unlocked,w,hp,last,spawn,dead,paused=false,hordeTimer=200,nukeUnlocked=false;
+function size(){c.width=innerWidth;c.height=innerHeight;w=c.width;h=c.height}addEventListener("resize",size);size();
+function start(){p={x:0,y:0};zs=[];bs=[];k=0;unlocked=1;nukeUnlocked=false;weapon=0;hp=10;last=0;spawn=0;dead=false;paused=false;hordeTimer=200;nukeActive=false;document.getElementById("over").style.display="none";document.getElementById("pauseMenu").style.display="none";update();menu()}
+let weapon=0,nukeActive=false;start();
+function nukeReady(){return nukeUnlocked||(unlocked>=NUKE_INDEX&&k>=NUKE_REQUIREMENT)}
+function refreshUnlocks(){unlocked=Math.min(NUKE_INDEX,1+Math.floor(k/20))}
+function update(){document.getElementById("kills").textContent=k;document.getElementById("gun").textContent=G[weapon][0];let n=k%20,afterMinigun=Math.max(0,k-MINIGUN_INDEX*20);document.getElementById("fill").style.width=(unlocked<NUKE_INDEX?n*5:Math.min(100,afterMinigun/NUKE_KILLS_AFTER_MINIGUN*100))+"%";document.getElementById("barText").textContent=nukeReady()?"ALL GUNS UNLOCKED":unlocked>=NUKE_INDEX?afterMinigun+" / 500 to unlock Nuke":n+" / 20 to next gun";document.getElementById("healthFill").style.width=hp*10+"%";document.getElementById("healthText").textContent=hp+" / 10 HITS";document.getElementById("countdown").textContent="HORDE: "+Math.max(0,Math.ceil(hordeTimer))+"s"}
+function menu(){let q=document.getElementById("guns");q.innerHTML="";for(let i=0;i<G.length;i++){let available=i===NUKE_INDEX?nukeReady():i<unlocked;let b=document.createElement("button");b.className="gun"+(i==weapon?" selected":"");b.textContent=(available?"✓ ":"🔒 ")+G[i][0]+(i===NUKE_INDEX&&!available?" (500 kills after Minigun)":"");b.disabled=!available;b.onclick=()=>{weapon=i;update();menu()};q.appendChild(b)}}
+document.getElementById("backpack").onclick=()=>{let e=document.getElementById("menu");e.style.display=e.style.display=="block"?"none":"block"};
+document.getElementById("pause").onclick=()=>{if(dead)return;paused=!paused;document.getElementById("pauseMenu").style.display=paused?"flex":"none"};
+document.getElementById("resume").onclick=()=>{paused=false;document.getElementById("pauseMenu").style.display="none"};
+document.getElementById("codes").onclick=()=>{
+ document.getElementById("codeModal").style.display="flex";
+ document.getElementById("codeInput").value="";
+ document.getElementById("codeResult").textContent="";
+ setTimeout(()=>document.getElementById("codeInput").focus(),50);
+};
+document.getElementById("closeCode").onclick=()=>{document.getElementById("codeModal").style.display="none"};
+document.getElementById("submitCode").onclick=()=>{
+ let code=document.getElementById("codeInput").value.trim().toUpperCase();
+ if(code==="FREE"){
+  unlocked=NUKE_INDEX; nukeUnlocked=true; menu(); update();
+  document.getElementById("codeResult").textContent="✓ FREE accepted! All guns unlocked!";
+ }else{document.getElementById("codeResult").textContent="✗ Invalid code";}
+};
+document.getElementById("codeInput").addEventListener("keydown",e=>{if(e.key==="Enter")document.getElementById("submitCode").click()});
+document.getElementById("again").onclick=start;
+addEventListener("keydown",e=>{keys[e.key.toLowerCase()]=1;if(e.key=="Escape"&&!dead){paused=!paused;document.getElementById("pauseMenu").style.display=paused?"flex":"none"}});
+addEventListener("keyup",e=>keys[e.key.toLowerCase()]=0);c.onmousemove=e=>{mouse.x=e.clientX;mouse.y=e.clientY};c.onmousedown=()=>mouse.down=1;addEventListener("mouseup",()=>mouse.down=0);
+["u","d","l","r"].forEach(id=>{let b=document.getElementById(id);b.onpointerdown=e=>{e.preventDefault();touch[id]=1};b.onpointerup=e=>{e.preventDefault();touch[id]=0};b.onpointercancel=()=>touch[id]=0});
+shoot.onpointerdown=e=>{e.preventDefault();mouse.down=1};shoot.onpointerup=e=>{e.preventDefault();mouse.down=0};shoot.onpointercancel=()=>mouse.down=0;
+function spawnZ(){let a=Math.random()*6.28,d=600+Math.random()*450,roll=Math.random(),kind=roll<.10?"bomb":roll<.28?"tiny":"normal",scale=kind==="tiny"?.55:1;zs.push({x:p.x+Math.cos(a)*d,y:p.y+Math.sin(a)*d,hp:(60+k)*(kind==="tiny"?.98:1),s:(55+Math.random()*25)*(kind==="tiny"?1.8:1),cool:0,kind,scale})}
+function shootGun(t){
+ let g=G[weapon];if(t-last<g[2])return;last=t;
+ let tx=mouse.x-w/2+p.x,ty=mouse.y-h/2+p.y;
+ if(("ontouchstart"in window)&&zs.length){let b=zs[0],bd=1e99;for(let z of zs){let d=(z.x-p.x)**2+(z.y-p.y)**2;if(d<bd){bd=d;b=z}}tx=b.x;ty=b.y}
+ let a=Math.atan2(ty-p.y,tx-p.x);
+ for(let i=0;i<g[3];i++){
+  let aa=a+(Math.random()-.5)*g[4];
+  let speed=g[5]==="flame"?700:850;
+  let life=g[5]==="flame"?.48:1;
+  let radius=g[5]==="nuke"?18:(g[5]==="plutonium"?9:(g[5]==="flame"?8:(g[5]==="laserMini"?5:4)));
+  bs.push({x:p.x,y:p.y,vx:Math.cos(aa)*speed,vy:Math.sin(aa)*speed,life:life,d:g[1],type:g[5],r:radius});
+ }
+}
+function D(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
+function hitCircle(px,py,r,cx,cy,cr){return Math.hypot(px-cx,py-cy)<=r+cr}
+function hitRect(px,py,r,rx,ry,rw,rh){
+ let nx=Math.max(rx,Math.min(px,rx+rw)),ny=Math.max(ry,Math.min(py,ry+rh));
+ return Math.hypot(px-nx,py-ny)<=r;
+}
+function zombieHit(b,z){
+ let s=z.scale||1;
+ // Match the visible zombie: head, torso, both legs, and both arms.
+ if(hitCircle(b.x,b.y,b.r,z.x,z.y-13*s,18*s)) return true;
+ if(hitRect(b.x,b.y,b.r,z.x-17*s,z.y-5*s,34*s,30*s)) return true;
+ if(hitRect(b.x,b.y,b.r,z.x-13*s,z.y+20*s,9*s,20*s)) return true;
+ if(hitRect(b.x,b.y,b.r,z.x+4*s,z.y+20*s,9*s,20*s)) return true;
+ // Slightly widened arm boxes so shots through visible arms register.
+ if(hitRect(b.x,b.y,b.r,z.x-31*s,z.y,14*s,22*s)) return true;
+ if(hitRect(b.x,b.y,b.r,z.x+17*s,z.y,14*s,22*s)) return true;
+ return false;
+}
+function damagePlayer(amount){hp=Math.max(0,hp-amount);update();if(hp<=0){dead=true;final.textContent=k;over.style.display="flex"}}
+function killZombieAt(i){let z=zs[i];if(!z)return;zs.splice(i,1);k++;refreshUnlocks();if(z.kind==="bomb")zombieExplosion(z)}
+function zombieExplosion(origin){let radius=120;for(let i=zs.length-1;i>=0;i--)if(Math.hypot(zs[i].x-origin.x,zs[i].y-origin.y)<=radius)killZombieAt(i);if(Math.hypot(p.x-origin.x,p.y-origin.y)<=radius)damagePlayer(3)}
+function explode(b){
+ let radius=115;
+ for(let i=zs.length-1;i>=0;i--){
+  let z=zs[i];
+  if(Math.hypot(z.x-b.x,z.y-b.y)<=radius) killZombieAt(i);
+ }
+ menu(); update();
+}
+function updateGame(t,dt){
+ if(dead||paused)return;
+ hordeTimer-=dt;
+ if(hordeTimer<=0){
+  for(let horde=0;horde<300;horde++) spawnZ();if(nukeActive){k+=zs.length;zs.length=0;refreshUnlocks();menu();update()}
+  hordeTimer=200;
+ }
+ document.getElementById("countdown").textContent="HORDE: "+Math.max(0,Math.ceil(hordeTimer))+"s";
+ let dx=(keys.d||keys.arrowright||touch.r?1:0)-(keys.a||keys.arrowleft||touch.l?1:0),
+     dy=(keys.s||keys.arrowdown||touch.d?1:0)-(keys.w||keys.arrowup||touch.u?1:0),
+     m=Math.hypot(dx,dy);
+ if(m){dx/=m;dy/=m}
+ p.x+=dx*220*dt;p.y+=dy*220*dt;
+ spawn-=dt;if(spawn<=0){spawnZ();if(nukeActive){k+=zs.length;zs.length=0;refreshUnlocks();menu();update()}spawn=Math.max(.25,1.05-k*.008)}
+ if(mouse.down)shootGun(t);
+
+ for(let i=bs.length-1;i>=0;i--){
+  let b=bs[i];b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;
+  if(b.life<=0){bs.splice(i,1);continue}
+  let hit=false;
+  for(let j=zs.length-1;j>=0;j--){
+   let z=zs[j];
+   if(zombieHit(b,z)){
+    hit=true;
+    if(b.type==="nuke"){
+     // Global nuke: every zombie that exists now, or spawns later, is killed.
+     nukeActive=true;
+     k+=zs.length;
+     zs.length=0;
+     bs.splice(i,1);
+     refreshUnlocks();
+     menu(); update();
+    } else if(b.type==="plutonium"){explode(b);bs.splice(i,1)}
+    else {z.hp-=b.d;bs.splice(i,1);if(z.hp<=0){killZombieAt(j);menu();update()}}
+    break;
+   }
+  }
+ }
+ for(let z of zs){
+  let a=Math.atan2(p.y-z.y,p.x-z.x);
+  z.x+=Math.cos(a)*z.s*dt;z.y+=Math.sin(a)*z.s*dt;
+  z.cool=Math.max(0,z.cool-dt);
+  // Accurate body/head contact area rather than one large circular hitbox.
+  let s=z.scale||1;
+  let bodyHit=Math.hypot(p.x-z.x,p.y-(z.y+7*s))<39*s;
+  let headHit=Math.hypot(p.x-z.x,p.y-(z.y-13*s))<34*s;
+  if((bodyHit||headHit)&&z.cool<=0){
+   z.cool=.65;damagePlayer(1);
+  }
+ }
+}
+function draw(){x.fillStyle="#30363b";x.fillRect(0,0,w,h);let cx=p.x,cy=p.y;
+x.strokeStyle="#555d63";x.lineWidth=125;for(let n=-1800;n<=1800;n+=360){x.beginPath();x.moveTo(n-cx+w/2,-2000-cy+h/2);x.lineTo(n-cx+w/2,2000-cy+h/2);x.stroke();x.beginPath();x.moveTo(-2000-cx+w/2,n-cy+h/2);x.lineTo(2000-cx+w/2,n-cy+h/2);x.stroke()}
+for(let xx=-1800;xx<=1800;xx+=360)for(let yy=-1800;yy<=1800;yy+=360){let sx=xx-cx+w/2,sy=yy-cy+h/2;x.fillStyle="#20262b";x.fillRect(sx,sy,270,270);x.fillStyle="#3b444b";for(let a=0;a<4;a++)for(let b=0;b<4;b++)x.fillRect(sx+25+a*58,sy+25+b*58,22,30)}
+for(let b of bs){
+ let sx=b.x-cx+w/2,sy=b.y-cy+h/2;
+ x.fillStyle=b.type==="nuke"?"#ffffff":b.type==="plutonium"?"#b56cff":b.type==="laser"?"#55ffff":"#ffd34d";
+ x.beginPath();x.arc(sx,sy,b.r,0,7);x.fill();
+ if(b.type==="laser"){x.globalAlpha=.35;x.beginPath();x.arc(sx,sy,10,0,7);x.fill();x.globalAlpha=1}
+}
+for(let z of zs){let sx=z.x-cx+w/2,sy=z.y-cy+h/2;x.save();x.translate(sx,sy);x.scale(z.scale||1,z.scale||1); // stylized zombie body
+x.fillStyle=z.kind==="bomb"?"#bd3030":"#4e8e55";x.fillRect(-17,-5,34,30);x.beginPath();x.arc(0,-13,18,0,7);x.fill();x.fillStyle=z.kind==="bomb"?"#651c1c":"#29352b";x.fillRect(-13,20,9,18);x.fillRect(4,20,9,18);x.fillStyle="#e8e8b0";x.fillRect(-11,-17,6,5);x.fillRect(5,-17,6,5);x.fillStyle="#222";x.fillRect(-4,-6,8,3);x.strokeStyle=z.kind==="bomb"?"#651c1c":"#29352b";x.lineWidth=7;x.beginPath();x.moveTo(-17,2);x.lineTo(-29,15);x.moveTo(17,2);x.lineTo(29,15);x.stroke();if(z.kind==="bomb"){x.fillStyle="#ffcc33";x.beginPath();x.arc(0,-30,5,0,7);x.fill()}x.restore()}
+let px=w/2,py=h/2;x.save();x.translate(px,py); // rock cowboy
+x.fillStyle="#8f8f8f";x.beginPath();x.moveTo(-26,17);x.quadraticCurveTo(-31,-5,-17,-19);x.quadraticCurveTo(0,-31,19,-18);x.quadraticCurveTo(31,-3,25,17);x.quadraticCurveTo(5,28,-26,17);x.fill();
+x.fillStyle="#222";x.beginPath();x.arc(-9,-3,3,0,7);x.arc(9,-3,3,0,7);x.fill();x.strokeStyle="#333";x.lineWidth=3;x.beginPath();x.moveTo(-8,8);x.quadraticCurveTo(0,14,9,8);x.stroke();
+x.fillStyle="#8b5a2b";x.fillRect(-29,-24,58,8);x.beginPath();x.ellipse(0,-29,19,13,0,Math.PI,Math.PI*2);x.fill();let a=Math.atan2(mouse.y-h/2,mouse.x-w/2);x.rotate(a);x.fillStyle="#222";x.fillRect(13,-4,30,8);x.restore()}
+let prev=performance.now();function loop(t){let dt=Math.min(.035,(t-prev)/1000);prev=t;updateGame(t,dt);draw();requestAnimationFrame(loop)}requestAnimationFrame(loop);
+})();
+</script></body></html>
