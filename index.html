@@ -105,7 +105,7 @@ function start(){p={x:0,y:0};zs=[];bs=[];bursts=[];k=0;unlocked=1;nukeUnlocked=f
  $("over").style.display="none";$("pauseMenu").style.display="none";menu();update()}
 function nukeReady(){return allUnlocked||nukeUnlocked||(unlocked>=NUKE_INDEX&&k>=NUKE_REQUIREMENT)}
 function refreshUnlocks(){unlocked=allUnlocked?G.length:Math.min(NUKE_INDEX,1+Math.floor(k/20))}
-function available(i){return G[i].code?!!codeGuns[i]:(allUnlocked||(i===NUKE_INDEX?nukeReady():i<unlocked))}
+function available(i){return G[i].code?!!codeGuns[i]:(allUnlocked||!!G[i].alt||(i===NUKE_INDEX?nukeReady():i<unlocked))}
 function curSig(){return [unlocked,allUnlocked,nukeReady(),weapon,JSON.stringify(codeGuns)].join("|")}
 function update(){$("kills").textContent=k;$("gun").textContent=G[weapon].n;let n=k%20,afterMinigun=Math.max(0,k-MINIGUN_INDEX*20);
  $("fill").style.width=allUnlocked?"100%":(unlocked<NUKE_INDEX?n*5:Math.min(100,afterMinigun/NUKE_KILLS_AFTER_MINIGUN*100))+"%";
