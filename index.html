@@ -99,7 +99,7 @@ let p,zs,bs,bursts,k,unlocked,w,h,hp,spawn,dead,paused=false,hordeTimer=200,nuke
 let gt,cdUntil,altUntil,mines,turret,zones,air,fx,overheatUntil,heat,pizzaCharge,weapon=0,nukeActive=false;
 function size(){c.width=innerWidth;c.height=innerHeight;w=c.width;h=c.height}addEventListener("resize",size);size();
 const $=id=>document.getElementById(id);
-let sig="",infoCache="";
+let sig="",infoCache="",scyAng=0;
 function start(){p={x:0,y:0};zs=[];bs=[];bursts=[];k=0;unlocked=1;nukeUnlocked=false;allUnlocked=false;codeGuns={};weapon=0;hp=10;spawn=0;dead=false;paused=false;hordeTimer=200;nukeActive=false;
  gt=0;cdUntil=G.map(()=>0);altUntil=G.map(()=>0);mines=[];turret={x:0,y:0,placed:false,next:0,burst:0,bt:0};zones=[];air=[];fx=[];overheatUntil=0;heat=0;pizzaCharge=0;
  $("over").style.display="none";$("pauseMenu").style.display="none";menu();update()}
@@ -200,7 +200,7 @@ function useWeapon(g,a,click){
  switch(g.t){
   case"kunai":for(let i=-1;i<=1;i++)shot(ang+i*.12,900,{type:"kunai",d:g.d,pic:"kunai",w:34,rot0:Math.PI,r:5});break;
   case"bat":melee(105,g.d);break;
-  case"scythe":melee(115,g.d);break;
+  case"scythe":return false; // the scythe spins around you on its own (see updateGame)
   case"bow":shot(ang,700,{type:"arrow",d:2,r:6,life:1.2,boom:{r:100,d:30}});break;
   case"grenade":{let[gx,gy]=clampTo(tx,ty,520);fly({img:"grenade",w:26,x0:p.x,y0:p.y,x1:gx,y1:gy,ms:650,arc:70,spin:10,then(){aoe(gx,gy,120,1e9)}});break}
   case"mine":if(mines.length>=3)return false;mines.push({x:p.x,y:p.y});break;
@@ -247,6 +247,7 @@ function updateGame(t,dt){
  // spawn rate doubled (v8)
  spawn-=dt;if(spawn<=0){spawnZ();if(nukeActive){k+=zs.length;zs.length=0;refreshUnlocks()}spawn=Math.max(.25,1.05-k*.008)/2}
  handleWeapon(dt);
+ if(G[weapon].t==="scythe"){scyAng+=dt*7;for(let rr of[65,95,120]){let sx=p.x+Math.cos(scyAng)*rr,sy=p.y+Math.sin(scyAng)*rr;for(let j=zs.length-1;j>=0;j--){let z=zs[j];if(z&&gt-(z.sh||-999)>250&&Math.hypot(z.x-sx,z.y-sy)<48){z.sh=gt;dmgZ(z,G[weapon].d)}}}}
  for(let i=air.length-1;i>=0;i--){let o=air[i];if(gt>=o.t1){air.splice(i,1);o.then()}}
  for(let i=mines.length-1;i>=0;i--){let mn=mines[i];if(zs.some(z=>Math.hypot(z.x-mn.x,z.y-mn.y)<34)){mines.splice(i,1);aoe(mn.x,mn.y,110,1e9)}}
  if(turret.placed){let best=null,bd=700*700;for(let z of zs){let d=(z.x-turret.x)**2+(z.y-turret.y)**2;if(d<bd){bd=d;best=z}}
@@ -305,10 +306,11 @@ pic("rockcowboy",0,-4,64,0);
 let a=("ontouchstart"in window)&&zs.length?aim().a:Math.atan2(mouse.y-h/2,mouse.x-w/2);
 x.rotate(a);if(Math.cos(a)<0)x.scale(1,-1);
 let hg=G[weapon],hn="h_"+hg.i,hw=HELD_W[hg.i];
-if(IMG[hn]){pic(hn,26+hw/2,6,hw,0)}
+if(hg.t==="scythe"){}else if(IMG[hn]){pic(hn,26+hw/2,6,hw,0)}
 else if(hg.t==="kunai")pic("kunai",38,6,34,Math.PI);
 else if(hg.t!=="house")pic(hg.i,38,6,hg.t==="turret"?30:26,0)}
 x.restore();
+if(G[weapon].t==="scythe"){x.save();x.translate(px,py);x.rotate(scyAng);pic("h_scythe",85,0,84,0);x.restore()}
 if(G[weapon].t==="pizza"&&pizzaCharge>0){x.fillStyle="#111c";x.fillRect(px-30,py+40,60,7);x.fillStyle="#ffad22";x.fillRect(px-30,py+40,60*Math.min(1,pizzaCharge/2000),7)}}
 let prev=performance.now();function loop(t){let dt=Math.min(.035,(t-prev)/1000);prev=t;updateGame(t,dt);draw();requestAnimationFrame(loop)}
 start();requestAnimationFrame(loop);
